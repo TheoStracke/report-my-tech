@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+      // GitHub Pages SPA fallback: preserve path after 404 and redirect to index with it
+      // See https://github.com/rafgraph/spa-github-pages
+      (function(l) {
+        var path = l.pathname + l.search + l.hash;
+        // Remove leading base if present
+        var base = '/report-my-tech';
+        if (path.startsWith(base)) path = path.slice(base.length);
+        l.replace(base + '/index.html?redirect=' + encodeURIComponent(path));
+      })(window.location);
+    </script>
+  </head>
+  <body>Redirecting...</body>
+</html>
