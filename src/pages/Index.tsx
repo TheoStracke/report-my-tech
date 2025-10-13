@@ -1,12 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from "react";
+import Header from "@/components/Header";
+import StatsCards from "@/components/StatsCards";
+import AttendanceForm from "@/components/AttendanceForm";
+import AttendanceList from "@/components/AttendanceList";
+import { getTodayAttendances } from "@/utils/localStorage";
+import { Attendance } from "@/types/attendance";
 
 const Index = () => {
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
+
+  const loadAttendances = () => {
+    const today = getTodayAttendances();
+    setAttendances(today);
+  };
+
+  useEffect(() => {
+    loadAttendances();
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        <StatsCards attendances={attendances} />
+        
+        <AttendanceForm onAdd={loadAttendances} />
+        
+        <AttendanceList attendances={attendances} onUpdate={loadAttendances} />
+      </main>
+
+      <footer className="border-t border-border bg-card py-4 mt-12">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+          Desenvolvido por <span className="font-semibold text-foreground">Theo Stracke</span> – uso pessoal
+        </div>
+      </footer>
     </div>
   );
 };
