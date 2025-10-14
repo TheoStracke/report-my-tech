@@ -82,9 +82,8 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Presencial">Presencial</SelectItem>
-                  <SelectItem value="Remoto">Remoto</SelectItem>
-                  <SelectItem value="Telefone">Telefone</SelectItem>
+                  <SelectItem value="Suporte Documental">Suporte Documental</SelectItem>
+                  <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
             </div>

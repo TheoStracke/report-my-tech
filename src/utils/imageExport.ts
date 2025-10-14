@@ -32,9 +32,9 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     return;
   }
 
-  // Dimensões e estilo - layout compacto para resumo executivo
+  // Dimensões e estilo - expandido para incluir gráficos
   const width = 1080;
-  const height = 720; // fixo, apenas resumo
+  const height = 1200; // aumentado para acomodar gráficos
   const padding = 60;
 
   // Cálculos do resumo
@@ -59,6 +59,20 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
   const topTypes = Object.entries(typeCount)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
+
+  // Preparar dados para gráfico de pizza (Documental vs Técnico)
+  const docCount = typeCount["Suporte Documental"] || 0;
+  const techCount = typeCount["Suporte Técnico"] || 0;
+  const docPercent = totalCount > 0 ? (docCount / totalCount) * 100 : 0;
+  const techPercent = totalCount > 0 ? (techCount / totalCount) * 100 : 0;
+
+  // Heatmap de horários (dividir dia em blocos de 1h)
+  const hourMap: Record<number, number> = {};
+  attendances.forEach((a) => {
+    const hour = parseInt(a.time.split(":")[0]);
+    hourMap[hour] = (hourMap[hour] || 0) + 1;
+  });
+  const maxHourCount = Math.max(...Object.values(hourMap), 1);
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -112,6 +126,50 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
       <text x="${padding + (count / totalCount) * 800 + 20}" y="${555 + idx * 50}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="18" font-weight="600">${count}</text>
     `)).join("\n")}
     ` : ""}
+    
+    <!-- Gráficos: Pizza e Heatmap lado a lado -->
+    <text x="${padding}" y="710" fill="#cbd5e1" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="20" font-weight="700">Análise Visual</text>
+    <line x1="${padding}" y1="725" x2="${width - padding}" y2="725" stroke="#334155" stroke-width="1" />
+    
+    <!-- Gráfico de Pizza (esquerda) -->
+    <g transform="translate(${padding + 150}, 900)">
+      <text x="0" y="-130" fill="#94a3b8" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="16" font-weight="600" text-anchor="middle">Distribuição por Tipo</text>
+      <circle cx="0" cy="0" r="100" fill="#1e293b" stroke="#334155" stroke-width="2" />
+      ${totalCount > 0 ? `
+        <!-- Fatia Suporte Técnico (azul) -->
+        <path d="M 0 0 L 0 -100 A 100 100 0 ${techPercent > 50 ? 1 : 0} 1 ${100 * Math.sin((techPercent / 100) * 2 * Math.PI)} ${-100 * Math.cos((techPercent / 100) * 2 * Math.PI)} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
+        <!-- Fatia Suporte Documental (verde) -->
+        <path d="M 0 0 L ${100 * Math.sin((techPercent / 100) * 2 * Math.PI)} ${-100 * Math.cos((techPercent / 100) * 2 * Math.PI)} A 100 100 0 ${docPercent > 50 ? 1 : 0} 1 0 -100 Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
+        <!-- Legendas -->
+        <rect x="-140" y="120" width="16" height="16" rx="3" fill="#3b82f6" />
+        <text x="-118" y="132" fill="#e5e7eb" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(0)}%)</text>
+        <rect x="-140" y="145" width="16" height="16" rx="3" fill="#10b981" />
+        <text x="-118" y="157" fill="#e5e7eb" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(0)}%)</text>
+      ` : ""}
+    </g>
+    
+    <!-- Heatmap de Horários (direita) -->
+    <g transform="translate(${padding + 540}, 770)">
+      <text x="0" y="0" fill="#94a3b8" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="16" font-weight="600">Heatmap de Horários</text>
+      ${Array.from({ length: 24 }, (_, i) => {
+        const count = hourMap[i] || 0;
+        const intensity = count > 0 ? (count / maxHourCount) : 0;
+        const color = intensity === 0 
+          ? "#1e293b" 
+          : intensity < 0.33 
+          ? "#1e40af" 
+          : intensity < 0.66 
+          ? "#3b82f6" 
+          : "#60a5fa";
+        const row = Math.floor(i / 6);
+        const col = i % 6;
+        return `
+          <rect x="${col * 70}" y="${row * 60 + 30}" width="60" height="50" rx="6" fill="${color}" stroke="#334155" stroke-width="1" />
+          <text x="${col * 70 + 30}" y="${row * 60 + 55}" fill="#f1f5f9" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="middle">${i.toString().padStart(2, "0")}h</text>
+          ${count > 0 ? `<text x="${col * 70 + 30}" y="${row * 60 + 72}" fill="#cbd5e1" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="12" font-weight="500" text-anchor="middle">${count}</text>` : ""}
+        `;
+      }).join("\n")}
+    </g>
     
     <!-- Rodapé -->
     <text x="${width / 2}" y="${height - 30}" fill="#475569" font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="14" font-weight="400" text-anchor="middle">Gerado automaticamente • Sistema de Relatórios Técnicos</text>

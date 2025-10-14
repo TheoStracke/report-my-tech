@@ -17,7 +17,7 @@ interface AttendanceFormProps {
 const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
   const [formData, setFormData] = useState({
     client: "",
-    type: "Remoto" as AttendanceType,
+    type: "Suporte Técnico" as AttendanceType,
     problem: "",
     solution: "",
     status: "Resolvido" as AttendanceStatus,
@@ -53,7 +53,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     // Limpar formulário
     setFormData({
       client: "",
-      type: "Remoto",
+      type: "Suporte Técnico",
       problem: "",
       solution: "",
       status: "Resolvido",
@@ -93,9 +93,8 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Presencial">Presencial</SelectItem>
-                  <SelectItem value="Remoto">Remoto</SelectItem>
-                  <SelectItem value="Telefone">Telefone</SelectItem>
+                  <SelectItem value="Suporte Documental">Suporte Documental</SelectItem>
+                  <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,5 +1,5 @@
 export type AttendanceStatus = "Resolvido" | "Pendente" | "Encaminhado";
-export type AttendanceType = "Presencial" | "Remoto" | "Telefone";
+export type AttendanceType = "Suporte Documental" | "Suporte Técnico";
 
 export interface Attendance {
   id: string;
