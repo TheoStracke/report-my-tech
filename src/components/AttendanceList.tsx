@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Attendance } from "@/types/attendance";
 import { deleteAttendance } from "@/utils/localStorage";
 import { exportTodayToCSV } from "@/utils/csvExport";
-import { Search, Download, Edit2, Trash2, List } from "lucide-react";
+import { exportTodayToImage } from "@/utils/imageExport";
+import { Search, Download, Edit2, Trash2, List, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import AttendanceModal from "./AttendanceModal";
 
@@ -37,6 +38,16 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
   const handleExport = () => {
     exportTodayToCSV(attendances);
     toast.success("CSV exportado com sucesso!");
+  };
+
+  const handleExportImage = async () => {
+    try {
+      await exportTodayToImage(attendances);
+      toast.success("Imagem do relatório gerada com sucesso!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Falha ao gerar a imagem do relatório.");
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -74,6 +85,10 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
               <Button onClick={handleExport} className="btn-accent shrink-0">
                 <Download className="mr-2 h-4 w-4" />
                 Gerar CSV Diário
+              </Button>
+              <Button onClick={handleExportImage} variant="outline" className="shrink-0 border-border">
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Gerar Foto do Relatório
               </Button>
             </div>
           </div>
