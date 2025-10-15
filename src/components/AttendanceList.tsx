@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Attendance } from "@/types/attendance";
 import { deleteAttendance } from "@/utils/localStorage";
 import { exportTodayToCSV } from "@/utils/csvExport";
-import { exportTodayToImage } from "@/utils/imageExport";
-import { Search, Download, Edit2, Trash2, List, Image as ImageIcon } from "lucide-react";
+import { exportTodayToImage, exportPendingReportImage } from "@/utils/imageExport";
+import { Search, Download, Edit2, Trash2, List, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import AttendanceModal from "./AttendanceModal";
 
@@ -47,6 +47,16 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
     } catch (e) {
       console.error(e);
       toast.error("Falha ao gerar a imagem do relatório.");
+    }
+  };
+
+  const handleExportPending = async () => {
+    try {
+      await exportPendingReportImage(attendances);
+      toast.success("Relatório de pendências gerado com sucesso!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Falha ao gerar relatório de pendências.");
     }
   };
 
@@ -90,6 +100,10 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
                 <ImageIcon className="mr-2 h-4 w-4" />
                 Gerar Foto do Relatório
               </Button>
+              <Button onClick={handleExportPending} variant="outline" className="shrink-0 border-border">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Relatório de Pendentes
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -116,6 +130,11 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
                         <Badge variant="secondary" className="bg-secondary/50">
                           {attendance.type}
                         </Badge>
+                        {attendance.category && (
+                          <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            {attendance.category}
+                          </Badge>
+                        )}
                         <span className="text-sm text-muted-foreground">
                           {attendance.time} • {attendance.timeSpent} min
                         </span>

@@ -56,6 +56,9 @@ declare module "lucide-react" {
   export const Trash2: any;
   export const List: any;
   export const Image: any;
+  export const Plus: any;
+  export const Save: any;
+  export const AlertCircle: any;
 }
 
 // UI components fallback types

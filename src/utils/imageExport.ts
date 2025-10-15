@@ -214,3 +214,73 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     img.src = url;
   });
 };
+
+export const exportPendingReportImage = async (attendances: Attendance[]): Promise<void> => {
+  const pendings = attendances.filter(a => a.status === 'Pendente');
+  if (pendings.length === 0) {
+    alert('Não há atendimentos pendentes hoje.');
+    return;
+  }
+
+  const width = 1080;
+  const padding = 48;
+  const lineHeight = 28;
+  const rowHeight = 80;
+  const headerHeight = 140;
+  const height = headerHeight + (pendings.length * rowHeight) + padding;
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const rows = pendings.map((a, i) => {
+    const y = headerHeight + i * rowHeight + 10;
+    return `
+      <rect x="${padding}" y="${y}" width="${width - padding * 2}" height="${rowHeight - 16}" rx="10" fill="#0b1220" stroke="#1e293b" />
+      <text x="${padding + 16}" y="${y + 24}" fill="#e5e7eb" font-family="Segoe UI, Roboto, Arial" font-size="18" font-weight="700">${escapeXml(a.client)}</text>
+      <text x="${padding + 16}" y="${y + 48}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.type)} • ${escapeXml(a.time)} • 1ª resposta: ${a.firstResponseMinutes ?? 0} min</text>
+      ${a.causeNoSolution ? `<text x="${padding + 520}" y="${y + 24}" fill="#fbbf24" font-family="Segoe UI, Roboto, Arial" font-size="16" font-weight="700">Causa: ${escapeXml(a.causeNoSolution)}</text>` : ''}
+      ${a.problem ? `<text x="${padding + 520}" y="${y + 48}" fill="#cbd5e1" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.problem.slice(0, 60))}${a.problem.length>60?'…':''}</text>` : ''}
+    `;
+  }).join('\n');
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <defs>
+      <linearGradient id="bgp" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#020617" />
+        <stop offset="100%" stop-color="#0b1220" />
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="${width}" height="${height}" fill="url(#bgp)" />
+    <text x="${padding}" y="${padding}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="20" font-weight="600">Relatório de Pendências - ${escapeXml(dateStr)}</text>
+    <text x="${padding}" y="${padding + 34}" fill="#e2e8f0" font-family="Segoe UI, Roboto, Arial" font-size="28" font-weight="800">Total pendentes: ${pendings.length}</text>
+    ${rows}
+  </svg>`;
+
+  const svgBlob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+  await new Promise<void>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas not available'));
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error('Falha ao gerar imagem'));
+        const a = document.createElement('a');
+        const today = new Date().toISOString().split('T')[0];
+        a.download = `relatorio_pendentes_${today}.png`;
+        a.href = URL.createObjectURL(blob);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        resolve();
+      }, 'image/png');
+    };
+    img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+    img.src = url;
+  });
+};

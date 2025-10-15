@@ -14,6 +14,7 @@ import { Attendance, AttendanceStatus, AttendanceType } from "@/types/attendance
 import { updateAttendance } from "@/utils/localStorage";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
+import { loadCategories, addCategory as addNewCategory } from "@/utils/categories";
 
 interface AttendanceModalProps {
   attendance: Attendance;
@@ -25,12 +26,18 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
   const [formData, setFormData] = useState({
     client: attendance.client,
     type: attendance.type as AttendanceType,
+    category: attendance.category || "",
     problem: attendance.problem,
     solution: attendance.solution,
     status: attendance.status as AttendanceStatus,
     timeSpent: attendance.timeSpent.toString(),
+    firstResponseMinutes: (attendance.firstResponseMinutes ?? "").toString(),
+    causeNoSolution: attendance.causeNoSolution ?? "",
     observations: attendance.observations || "",
   });
+
+  const [categories, setCategories] = useState(() => loadCategories());
+  const [newCategory, setNewCategory] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,10 +51,13 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
       ...attendance,
       client: formData.client,
       type: formData.type,
+      category: formData.category || undefined,
       problem: formData.problem,
       solution: formData.solution,
       status: formData.status,
-      timeSpent: parseInt(formData.timeSpent),
+      timeSpent: formData.status === "Pendente" ? 0 : parseInt(formData.timeSpent || "0"),
+      firstResponseMinutes: formData.status === "Pendente" ? parseInt(formData.firstResponseMinutes || "0") : undefined,
+      causeNoSolution: formData.status === "Pendente" ? (formData.causeNoSolution || undefined) : undefined,
       observations: formData.observations,
     };
 
@@ -86,6 +96,50 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
                   <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-category">Despachante/Categoria</Label>
+            <div className="flex gap-2">
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+              >
+                <SelectTrigger className="bg-input border-border flex-1">
+                  <SelectValue placeholder="Selecione ou adicione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="edit-newCategory"
+                placeholder="Nova categoria"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="bg-input border-border flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (newCategory.trim()) {
+                    addNewCategory(newCategory.trim());
+                    setCategories(loadCategories());
+                    setFormData({ ...formData, category: newCategory.trim() });
+                    setNewCategory("");
+                    toast.success("Categoria adicionada!");
+                  }
+                }}
+                className="px-3"
+              >
+                Adicionar
+              </Button>
             </div>
           </div>
 
@@ -132,10 +186,36 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
                 min="0"
                 value={formData.timeSpent}
                 onChange={(e) => setFormData({ ...formData, timeSpent: e.target.value })}
+                disabled={formData.status === "Pendente"}
                 className="bg-input border-border"
               />
             </div>
           </div>
+
+          {formData.status === "Pendente" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstResponse">Tempo de Primeira Resposta (min)*</Label>
+                <Input
+                  id="edit-firstResponse"
+                  type="number"
+                  min="0"
+                  value={formData.firstResponseMinutes}
+                  onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
+                  className="bg-input border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-cause">Causa (sem solução)*</Label>
+                <Input
+                  id="edit-cause"
+                  value={formData.causeNoSolution}
+                  onChange={(e) => setFormData({ ...formData, causeNoSolution: e.target.value })}
+                  className="bg-input border-border"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="edit-observations">Observações (opcional)</Label>

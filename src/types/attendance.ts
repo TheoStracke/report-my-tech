@@ -7,9 +7,12 @@ export interface Attendance {
   time: string;
   client: string;
   type: AttendanceType;
+  category?: string; // categoria específica do suporte (dinâmica)
   problem: string;
   solution: string;
   status: AttendanceStatus;
-  timeSpent: number; // em minutos
+  timeSpent: number; // em minutos - não usado para Pendente
+  firstResponseMinutes?: number; // em minutos - apenas para Pendente
+  causeNoSolution?: string; // motivo/causa quando Pendente
   observations?: string;
 }

@@ -9,6 +9,7 @@ import { Attendance, AttendanceStatus, AttendanceType } from "@/types/attendance
 import { addAttendance } from "@/utils/localStorage";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { loadCategories, addCategory as addNewCategory } from "@/utils/categories";
 
 interface AttendanceFormProps {
   onAdd: () => void;
@@ -18,17 +19,23 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
   const [formData, setFormData] = useState({
     client: "",
     type: "Suporte Técnico" as AttendanceType,
+    category: "",
     problem: "",
     solution: "",
     status: "Resolvido" as AttendanceStatus,
     timeSpent: "",
+    firstResponseMinutes: "",
+    causeNoSolution: "",
     observations: "",
   });
+
+  const [categories, setCategories] = useState<string[]>(() => loadCategories());
+  const [newCategory, setNewCategory] = useState<string>("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.client || !formData.problem || !formData.solution || !formData.timeSpent) {
+    if (!formData.client || !formData.problem || !formData.solution || (formData.status !== "Pendente" && !formData.timeSpent)) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -40,10 +47,13 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       time: now.toTimeString().split(" ")[0].substring(0, 5),
       client: formData.client,
       type: formData.type,
+      category: formData.category || undefined,
       problem: formData.problem,
       solution: formData.solution,
       status: formData.status,
-      timeSpent: parseInt(formData.timeSpent),
+      timeSpent: formData.status === "Pendente" ? 0 : parseInt(formData.timeSpent || "0"),
+      firstResponseMinutes: formData.status === "Pendente" ? parseInt(formData.firstResponseMinutes || "0") : undefined,
+      causeNoSolution: formData.status === "Pendente" ? (formData.causeNoSolution || undefined) : undefined,
       observations: formData.observations,
     };
 
@@ -54,12 +64,17 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     setFormData({
       client: "",
       type: "Suporte Técnico",
+      category: "",
       problem: "",
       solution: "",
       status: "Resolvido",
       timeSpent: "",
+      firstResponseMinutes: "",
+      causeNoSolution: "",
       observations: "",
     });
+
+    setNewCategory("");
 
     onAdd();
   };
@@ -97,6 +112,43 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                   <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria do Suporte (opcional)</Label>
+              <div className="flex gap-2">
+                <Select value={formData.category} onValueChange={(value: string) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger className="bg-input border-border min-w-[240px]">
+                    <SelectValue placeholder="Selecione ou adicione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Nova categoria"
+                  className="bg-input border-border"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const v = newCategory.trim();
+                    if (!v) return;
+                    const next = addNewCategory(v);
+                    setCategories(next);
+                    setFormData({ ...formData, category: v });
+                    setNewCategory("");
+                    toast.success("Categoria adicionada");
+                  }}
+                >
+                  Adicionar
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -145,11 +197,39 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                 min="0"
                 value={formData.timeSpent}
                 onChange={(e) => setFormData({ ...formData, timeSpent: e.target.value })}
+                disabled={formData.status === "Pendente"}
                 placeholder="Ex: 30"
                 className="bg-input border-border"
               />
             </div>
           </div>
+
+          {formData.status === "Pendente" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstResponse">Tempo de Primeira Resposta (min)*</Label>
+                <Input
+                  id="firstResponse"
+                  type="number"
+                  min="0"
+                  value={formData.firstResponseMinutes}
+                  onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
+                  placeholder="Ex: 5"
+                  className="bg-input border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="causeNoSolution">Causa (sem solução)*</Label>
+                <Input
+                  id="causeNoSolution"
+                  value={formData.causeNoSolution}
+                  onChange={(e) => setFormData({ ...formData, causeNoSolution: e.target.value })}
+                  placeholder="Ex.: Aguardando peça, Acesso negado, Falta de informação..."
+                  className="bg-input border-border"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="observations">Observações (opcional)</Label>
