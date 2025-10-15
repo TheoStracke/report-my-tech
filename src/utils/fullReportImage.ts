@@ -81,7 +81,10 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
 
   // Cálculo de ângulos para pizza
   // Corrigir proporção do gráfico de pizza
-  const pieRadius = 120;
+  // Ajuste para garantir padding e proporção 1:1
+  const pieMaxRadius = 120;
+  const piePadding = 20;
+  const pieRadius = pieMaxRadius - piePadding; // 100
   const techAngle = (techPercent / 100) * 360;
   const techRadians = (techAngle * Math.PI) / 180;
   const techX = pieRadius * Math.sin(techRadians);
@@ -197,13 +200,13 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   <!-- Gráfico de Pizza -->
   <!-- Centralizado horizontalmente e abaixo dos Top 5 -->
   <g transform="translate(${width / 2}, ${yPizza})">
-    <text x="0" y="-150" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuição por Tipo</text>
-    <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
+    <text x="0" y="-${pieMaxRadius + 30}" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuição por Tipo</text>
+    <circle cx="0" cy="0" r="${pieMaxRadius}" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount === 0
       ? `<text x="0" y="10" fill="#94a3b8" font-size="18" text-anchor="middle">Sem dados</text>`
       : (techCount === 0 || docCount === 0)
         ? `
-          <circle cx="0" cy="0" r="100" fill="${techCount > 0 ? '#3b82f6' : '#10b981'}" />
+          <circle cx="0" cy="0" r="${pieRadius}" fill="${techCount > 0 ? '#3b82f6' : '#10b981'}" />
           <text x="0" y="10" fill="#fff" font-size="28" font-weight="bold" text-anchor="middle">
             ${techCount > 0 ? 'Suporte Técnico' : 'Suporte Documental'}
           </text>
@@ -214,7 +217,7 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
         `
     }
     <!-- Legenda -->
-    <g transform="translate(0, 130)">
+    <g transform="translate(0, ${pieMaxRadius + 30})">
       ${techCount > 0
         ? `
           <rect x="-90" y="0" width="20" height="20" rx="4" fill="#3b82f6" />
