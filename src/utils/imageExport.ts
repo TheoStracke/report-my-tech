@@ -9,7 +9,7 @@ const escapeXml = (str: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-// Quebra texto em mÃºltiplas linhas de tamanho aproximado
+// Quebra texto em múltiplas linhas de tamanho aproximado
 const wrapText = (text: string, maxCharsPerLine = 60): string[] => {
   const words = text.split(/\s+/);
   const lines: string[] = [];
@@ -26,7 +26,7 @@ const wrapText = (text: string, maxCharsPerLine = 60): string[] => {
   return lines;
 };
 
-// FunÃ§Ã£o para formatar minutos em tempo legÃ­vel
+// Função para formatar minutos em tempo legível
 const formatMinutes = (minutes: number): string => {
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.floor(minutes / 60);
@@ -40,19 +40,19 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     return;
   }
 
-  // MÃ©tricas principais
+  // Métricas principais
   const total = attendances.length;
   const resolvidos = attendances.filter(a => a.status === "Resolvido").length;
   const pendentes = attendances.filter(a => a.status === "Pendente").length;
   const encaminhados = attendances.filter(a => a.status === "Encaminhado").length;
 
-  // Tempo mÃ©dio de atendimento
+  // Tempo médio de atendimento
   const atendimentosComTempo = attendances.filter(a => a.timeSpent > 0);
   const tempoMedio = atendimentosComTempo.length 
     ? Math.round(atendimentosComTempo.reduce((sum, a) => sum + a.timeSpent, 0) / atendimentosComTempo.length)
     : 0;
 
-  // Tempo mÃ©dio de primeira resposta (agora em minutos)
+  // Tempo médio de primeira resposta (agora em minutos)
   const atendimentosComResposta = attendances.filter(a => a.firstResponseMinutes && a.firstResponseMinutes > 0);
   const tempoMedioPrimeiraResposta = atendimentosComResposta.length
     ? Math.round(atendimentosComResposta.reduce((sum, a) => sum + (a.firstResponseMinutes || 0), 0) / atendimentosComResposta.length)
@@ -78,7 +78,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  // Causas de pendÃªncias
+  // Causas de pendências
   const causasPendencia: Record<string, number> = {};
   attendances.filter(a => a.status === "Pendente" && a.causeNoSolution).forEach(a => {
     const causa = a.causeNoSolution!;
@@ -88,10 +88,10 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  // Dificuldades (observaÃ§Ãµes)
+  // Dificuldades (observações)
   const dificuldades = attendances
     .filter(a => a.observations && a.observations.trim())
-    .map(a => `â€¢ ${a.observations}`)
+    .map(a => `• ${a.observations}`)
     .slice(0, 5);
 
   // Contagem por tipo
@@ -100,12 +100,12 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     return acc;
   }, {});
   const docCount = typeCount["Suporte Documental"] || 0;
-  const techCount = typeCount["Suporte TÃ©cnico"] || 0;
+  const techCount = typeCount["Suporte Técnico"] || 0;
   const totalCount = docCount + techCount;
   const docPercent = totalCount > 0 ? (docCount / totalCount) * 100 : 0;
   const techPercent = totalCount > 0 ? (techCount / totalCount) * 100 : 0;
 
-  // CÃ¡lculo de Ã¢ngulos para pizza
+  // Cálculo de ângulos para pizza
   const techAngle = (techPercent / 100) * 360;
   const techRadians = (techAngle * Math.PI) / 180;
   const techX = 100 * Math.sin(techRadians);
@@ -131,7 +131,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
   <rect x="0" y="0" width="${width}" height="${height}" fill="url(#bgGradient)" />
   
   <!-- Header -->
-  <text x="${width / 2}" y="60" fill="#60a5fa" font-size="42" font-weight="bold" text-anchor="middle">ðŸ“Š RelatÃ³rio Completo do Dia</text>
+  <text x="${width / 2}" y="60" fill="#60a5fa" font-size="42" font-weight="bold" text-anchor="middle">📊 Relatório Completo do Dia</text>
   <text x="${width / 2}" y="100" fill="#cbd5e1" font-size="20" text-anchor="middle">${escapeXml(today)} - Theo Stracke</text>
   
   <!-- Cards de Resumo -->
@@ -161,22 +161,22 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     <text x="1140" y="80" fill="#cffafe" font-size="48" font-weight="bold" text-anchor="middle">${encaminhados}</text>
   </g>
 
-  <!-- Tempos MÃ©dios -->
+  <!-- Tempos Médios -->
   <g transform="translate(${padding}, 300)">
     <rect x="0" y="0" width="630" height="100" rx="12" fill="#4c1d95" opacity="0.3" />
     <rect x="0" y="0" width="630" height="100" rx="12" fill="none" stroke="#a78bfa" stroke-width="2" />
-    <text x="20" y="35" fill="#e9d5ff" font-size="18" font-weight="600">â±ï¸ Tempo MÃ©dio de Atendimento</text>
+    <text x="20" y="35" fill="#e9d5ff" font-size="18" font-weight="600">⏱️ Tempo Médio de Atendimento</text>
     <text x="20" y="70" fill="#ddd6fe" font-size="36" font-weight="bold">${formatMinutes(tempoMedio)}</text>
     
     <rect x="660" y="0" width="630" height="100" rx="12" fill="#831843" opacity="0.3" />
     <rect x="660" y="0" width="630" height="100" rx="12" fill="none" stroke="#f472b6" stroke-width="2" />
-    <text x="680" y="35" fill="#fce7f3" font-size="18" font-weight="600">âš¡ Tempo MÃ©dio 1Âª Resposta</text>
+    <text x="680" y="35" fill="#fce7f3" font-size="18" font-weight="600">⚡ Tempo Médio 1ª Resposta</text>
     <text x="680" y="70" fill="#fbcfe8" font-size="36" font-weight="bold">${formatMinutes(tempoMedioPrimeiraResposta)}</text>
   </g>
 
   <!-- Top Despachantes -->
   <g transform="translate(${padding}, 440)">
-    <text x="0" y="0" fill="#fbbf24" font-size="24" font-weight="bold">ðŸ‘¥ Top 5 Despachantes/Clientes Mais Atendidos</text>
+    <text x="0" y="0" fill="#fbbf24" font-size="24" font-weight="bold">👥 Top 5 Despachantes/Clientes Mais Atendidos</text>
     <rect x="0" y="15" width="630" height="${Math.max(topClientes.length * 45 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${topClientes.map(([cliente, qtd], i) => {
       const barWidth = (qtd / Math.max(...topClientes.map(c => c[1]))) * 500;
@@ -190,7 +190,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
 
   <!-- Top Erros -->
   <g transform="translate(${padding + 660}, 440)">
-    <text x="0" y="0" fill="#ef4444" font-size="24" font-weight="bold">ðŸ› Top 5 Erros Mais Frequentes</text>
+    <text x="0" y="0" fill="#ef4444" font-size="24" font-weight="bold">🐛 Top 5 Erros Mais Frequentes</text>
     <rect x="0" y="15" width="630" height="${Math.max(topErros.length * 45 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${topErros.length > 0 ? topErros.map(([erro, qtd], i) => {
       const barWidth = (qtd / Math.max(...topErros.map(e => e[1]))) * 500;
@@ -203,24 +203,24 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
     }).join('') : `<text x="15" y="50" fill="#94a3b8" font-size="16">Nenhum erro categorizado</text>`}
   </g>
 
-  <!-- GrÃ¡fico de Pizza -->
+  <!-- Gráfico de Pizza -->
   <g transform="translate(${padding + 200}, ${topClientes.length > topErros.length ? 700 + topClientes.length * 45 : 700 + topErros.length * 45})">
-    <text x="0" y="-50" fill="#94a3b8" font-size="24" font-weight="600" text-anchor="middle">ðŸ“ˆ DistribuiÃ§Ã£o por Tipo</text>
+    <text x="0" y="-50" fill="#94a3b8" font-size="24" font-weight="600" text-anchor="middle">📈 Distribuição por Tipo</text>
     <circle cx="0" cy="50" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount > 0 ? `
       <path d="M 0 50 L 0 -70 A 120 120 0 ${largeArcTech} 1 ${techX} ${techY + 50} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
       <path d="M 0 50 L ${techX} ${techY + 50} A 120 120 0 ${largeArcDoc} 1 0 -70 Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
       <rect x="-160" y="200" width="20" height="20" rx="4" fill="#3b82f6" />
-      <text x="-135" y="215" fill="#e5e7eb" font-size="16" font-weight="500">Suporte TÃ©cnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
+      <text x="-135" y="215" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
       <rect x="-160" y="230" width="20" height="20" rx="4" fill="#10b981" />
       <text x="-135" y="245" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
     ` : ''}
   </g>
 
-  <!-- Causas de PendÃªncia -->
+  <!-- Causas de Pendência -->
   ${topCausasPendencia.length > 0 ? `
   <g transform="translate(${padding + 700}, ${topClientes.length > topErros.length ? 700 + topClientes.length * 45 : 700 + topErros.length * 45})">
-    <text x="0" y="-50" fill="#fbbf24" font-size="24" font-weight="bold">â¸ï¸ Causas de PendÃªncia</text>
+    <text x="0" y="-50" fill="#fbbf24" font-size="24" font-weight="bold">⏸️ Causas de Pendência</text>
     <rect x="0" y="-30" width="590" height="${topCausasPendencia.length * 40 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${topCausasPendencia.map(([causa, qtd], i) => {
       const causaTruncada = causa.length > 45 ? causa.substring(0, 45) + '...' : causa;
@@ -235,7 +235,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
   <!-- Dificuldades -->
   ${dificuldades.length > 0 ? `
   <g transform="translate(${padding}, ${topClientes.length > topErros.length ? 1000 + topClientes.length * 45 : 1000 + topErros.length * 45})">
-    <text x="0" y="0" fill="#f472b6" font-size="24" font-weight="bold">ðŸ’­ Dificuldades Encontradas</text>
+    <text x="0" y="0" fill="#f472b6" font-size="24" font-weight="bold">💭 Dificuldades Encontradas</text>
     <rect x="0" y="20" width="1300" height="${dificuldades.length * 35 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${dificuldades.map((dif, i) => {
       const difTruncada = dif.length > 120 ? dif.substring(0, 120) + '...' : dif;
@@ -246,7 +246,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
   
   <!-- Footer -->
   <text x="${width / 2}" y="${height - 40}" fill="#64748b" font-size="14" text-anchor="middle">Gerado automaticamente pelo Sistema de Atendimentos</text>
-  <text x="${width / 2}" y="${height - 20}" fill="#475569" font-size="12" text-anchor="middle">Â© ${new Date().getFullYear()} Theo Stracke - Todos os direitos reservados</text>
+  <text x="${width / 2}" y="${height - 20}" fill="#475569" font-size="12" text-anchor="middle">© ${new Date().getFullYear()} Theo Stracke - Todos os direitos reservados</text>
 </svg>`;
 
   // Converte SVG -> PNG (hi-dpi) e baixa arquivo
@@ -292,7 +292,7 @@ export const exportTodayToImage = async (attendances: Attendance[]): Promise<voi
 export const exportPendingReportImage = async (attendances: Attendance[]): Promise<void> => {
   const pendings = attendances.filter(a => a.status === 'Pendente');
   if (pendings.length === 0) {
-    alert('NÃ£o hÃ¡ atendimentos pendentes hoje.');
+    alert('Não há atendimentos pendentes hoje.');
     return;
   }
 
@@ -310,9 +310,9 @@ export const exportPendingReportImage = async (attendances: Attendance[]): Promi
     return `
       <rect x="${padding}" y="${y}" width="${width - padding * 2}" height="${rowHeight - 16}" rx="10" fill="#0b1220" stroke="#1e293b" />
       <text x="${padding + 16}" y="${y + 24}" fill="#e5e7eb" font-family="Segoe UI, Roboto, Arial" font-size="18" font-weight="700">${escapeXml(a.category)}</text>
-      <text x="${padding + 16}" y="${y + 48}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.type)} â€¢ ${escapeXml(a.time)} â€¢ 1Âª resposta: ${a.firstResponseMinutes ?? 0} min</text>
+      <text x="${padding + 16}" y="${y + 48}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.type)} • ${escapeXml(a.time)} • 1ª resposta: ${a.firstResponseMinutes ?? 0} min</text>
       ${a.causeNoSolution ? `<text x="${padding + 520}" y="${y + 24}" fill="#fbbf24" font-family="Segoe UI, Roboto, Arial" font-size="16" font-weight="700">Causa: ${escapeXml(a.causeNoSolution)}</text>` : ''}
-      ${a.problem ? `<text x="${padding + 520}" y="${y + 48}" fill="#cbd5e1" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.problem.slice(0, 60))}${a.problem.length>60?'â€¦':''}</text>` : ''}
+      ${a.problem ? `<text x="${padding + 520}" y="${y + 48}" fill="#cbd5e1" font-family="Segoe UI, Roboto, Arial" font-size="14">${escapeXml(a.problem.slice(0, 60))}${a.problem.length>60?'…':''}</text>` : ''}
     `;
   }).join('\n');
 
@@ -325,7 +325,7 @@ export const exportPendingReportImage = async (attendances: Attendance[]): Promi
       </linearGradient>
     </defs>
     <rect x="0" y="0" width="${width}" height="${height}" fill="url(#bgp)" />
-    <text x="${padding}" y="${padding}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="20" font-weight="600">RelatÃ³rio de PendÃªncias - ${escapeXml(dateStr)}</text>
+    <text x="${padding}" y="${padding}" fill="#93c5fd" font-family="Segoe UI, Roboto, Arial" font-size="20" font-weight="600">Relatório de Pendências - ${escapeXml(dateStr)}</text>
     <text x="${padding}" y="${padding + 34}" fill="#e2e8f0" font-family="Segoe UI, Roboto, Arial" font-size="28" font-weight="800">Total pendentes: ${pendings.length}</text>
     ${rows}
   </svg>`;
