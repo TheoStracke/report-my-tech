@@ -182,15 +182,15 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   <!-- Gráfico de Pizza -->
   <!-- Título do gráfico de pizza acima do gráfico -->
   <g transform="translate(${padding + 200}, ${topClientes.length > topErros.length ? 700 + topClientes.length * 50 : 700 + topErros.length * 50})">
-    <text x="0" y="-160" fill="#60a5fa" font-size="24" font-weight="bold" text-anchor="middle">Distribuição dos Atendimentos</text>
+    <text x="0" y="-140" fill="#60a5fa" font-size="24" font-weight="bold" text-anchor="middle">Distribuir por tipo</text>
     <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount > 0 ? `
       <path d="M 0 0 L 0 -${pieRadius} A ${pieRadius} ${pieRadius} 0 ${largeArcTech} 1 ${techX} ${techY} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
       <path d="M 0 0 L ${techX} ${techY} A ${pieRadius} ${pieRadius} 0 ${largeArcDoc} 1 0 -${pieRadius} Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
-      <rect x="-160" y="140" width="20" height="20" rx="4" fill="#3b82f6" />
-      <text x="-135" y="155" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
-      <rect x="-160" y="170" width="20" height="20" rx="4" fill="#10b981" />
-      <text x="-135" y="185" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
+      <rect x="-90" y="130" width="20" height="20" rx="4" fill="#3b82f6" />
+      <text x="-65" y="145" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
+      <rect x="-90" y="160" width="20" height="20" rx="4" fill="#10b981" />
+      <text x="-65" y="175" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
     ` : ''}
   </g>
 
