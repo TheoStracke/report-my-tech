@@ -85,7 +85,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       solution: formData.solution,
       status: formData.status,
       timeSpent: formData.status === 'Pendente' ? 0 : parseInt(formData.timeSpent || '0'),
-      firstResponseMinutes: formData.status === 'Pendente' ? parseInt(formData.firstResponseMinutes || '0') : undefined,
+      firstResponseMinutes: formData.firstResponseMinutes ? parseInt(formData.firstResponseMinutes) : undefined,
       causeNoSolution: formData.status === 'Pendente' ? (formData.causeNoSolution || undefined) : undefined,
       observations: formData.observations,
     };
@@ -245,25 +245,27 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                    <Label htmlFor="errorType" className="text-base font-semibold">
-                      Categoria do Erro/Dúvida
-                    </Label>
-                    <Badge variant="secondary" className="text-xs">Opcional</Badge>
+                {formData.type === 'Suporte Técnico' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                      <Label htmlFor="errorType" className="text-base font-semibold">
+                        Categoria do Erro
+                      </Label>
+                      <Badge variant="secondary" className="text-xs">Opcional</Badge>
+                    </div>
+                    <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>
+                      <SelectTrigger className="bg-input border-border h-11">
+                        <SelectValue placeholder="Selecione a categoria do erro..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORT_ERRORS.map((error) => (
+                          <SelectItem key={error} value={error}>{error}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>
-                    <SelectTrigger className="bg-input border-border h-11">
-                      <SelectValue placeholder="Selecione a categoria do erro ou dúvida..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORT_ERRORS.map((error) => (
-                        <SelectItem key={error} value={error}>{error}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                )}
               </div>
 
               <div className="flex justify-end pt-4">
