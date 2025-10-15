@@ -89,6 +89,17 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   const largeArcTech = techPercent > 50 ? 1 : 0;
   const largeArcDoc = docPercent > 50 ? 1 : 0;
 
+  // Layout helpers (mantém o layout atual, só melhora legibilidade)
+  const linhaAltura = 50; // mesma unidade usada nos Top 5
+  const basePizzaY = 750; // offset visual para o bloco de pizza
+  const baseCausasY = 750; // alinhado com pizza
+  const baseDificuldadesY = 1050; // bloco seguinte após causas
+  const maxTopCount = Math.max(topClientes.length, topErros.length);
+  const blocosAltura = maxTopCount * linhaAltura + 150; // referência geral (se precisar)
+  const yPizza = maxTopCount * linhaAltura + basePizzaY;
+  const yCausas = maxTopCount * linhaAltura + baseCausasY;
+  const yDificuldades = maxTopCount * linhaAltura + baseDificuldadesY;
+
   // SVG
   const width = 1400;
   const height = 2000;
@@ -185,7 +196,7 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
 
   <!-- Gráfico de Pizza -->
   <!-- Centralizado horizontalmente e abaixo dos Top 5 -->
-  <g transform="translate(${width / 2}, ${Math.max(topClientes.length, topErros.length) * 50 + 750})">
+  <g transform="translate(${width / 2}, ${yPizza})">
     <text x="0" y="-150" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuir por tipo</text>
     <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount > 0 ? `
@@ -200,7 +211,7 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
 
   <!-- Causas de Pendência -->
   ${topCausasPendencia.length > 0 ? `
-  <g transform="translate(${padding + 700}, ${Math.max(topClientes.length, topErros.length) * 50 + 750})">
+  <g transform="translate(${padding + 700}, ${yCausas})">
     <text x="0" y="-50" fill="#fbbf24" font-size="24" font-weight="bold">⏸️ Causas de Pendência</text>
     <rect x="0" y="-30" width="590" height="${topCausasPendencia.length * 40 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
     ${topCausasPendencia.map(([causa, qtd], i) => {
@@ -215,7 +226,7 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
 
   <!-- Dificuldades -->
   ${dificuldades.length > 0 ? `
-  <g transform="translate(${padding}, ${Math.max(topClientes.length, topErros.length) * 50 + 1050})">
+  <g transform="translate(${padding}, ${yDificuldades})">
     <text x="0" y="0" fill="#f472b6" font-size="24" font-weight="bold">💭 Dificuldades Encontradas</text>
     <rect x="0" y="20" width="1300" height="${dificuldades.length * 35 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
     ${dificuldades.map((dif, i) => {
