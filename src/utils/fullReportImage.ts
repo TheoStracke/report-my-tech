@@ -197,25 +197,38 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   <!-- Gráfico de Pizza -->
   <!-- Centralizado horizontalmente e abaixo dos Top 5 -->
   <g transform="translate(${width / 2}, ${yPizza})">
-    <text x="0" y="-150" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuir por tipo</text>
+    <text x="0" y="-150" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuição por Tipo</text>
     <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
-    ${totalCount === 0 ? '' :
-      (techCount === 0 || docCount === 0)
+    ${totalCount === 0
+      ? `<text x="0" y="10" fill="#94a3b8" font-size="18" text-anchor="middle">Sem dados</text>`
+      : (techCount === 0 || docCount === 0)
         ? `
-          <circle cx="0" cy="0" r="110" fill="${techCount > 0 ? '#3b82f6' : '#10b981'}" />
-          <text x="0" y="10" fill="#fff" font-size="32" font-weight="bold" text-anchor="middle">${techCount > 0 ? '100%' : '100%'}</text>
+          <circle cx="0" cy="0" r="100" fill="${techCount > 0 ? '#3b82f6' : '#10b981'}" />
+          <text x="0" y="10" fill="#fff" font-size="28" font-weight="bold" text-anchor="middle">
+            ${techCount > 0 ? 'Suporte Técnico' : 'Suporte Documental'}
+          </text>
         `
         : `
           <path d="M 0 0 L 0 -${pieRadius} A ${pieRadius} ${pieRadius} 0 ${largeArcTech} 1 ${techX} ${techY} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
           <path d="M 0 0 L ${techX} ${techY} A ${pieRadius} ${pieRadius} 0 ${largeArcDoc} 1 0 -${pieRadius} Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
         `
     }
-    <!-- Legenda sempre abaixo do gráfico, centralizada -->
-    <g>
-      <rect x="-90" y="130" width="20" height="20" rx="4" fill="#3b82f6" />
-      <text x="-65" y="145" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
-      <rect x="-90" y="160" width="20" height="20" rx="4" fill="#10b981" />
-      <text x="-65" y="175" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
+    <!-- Legenda -->
+    <g transform="translate(0, 130)">
+      ${techCount > 0
+        ? `
+          <rect x="-90" y="0" width="20" height="20" rx="4" fill="#3b82f6" />
+          <text x="-65" y="15" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
+            Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)
+          </text>
+        ` : ''}
+      ${docCount > 0
+        ? `
+          <rect x="-90" y="30" width="20" height="20" rx="4" fill="#10b981" />
+          <text x="-65" y="45" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
+            Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)
+          </text>
+        ` : ''}
     </g>
   </g>
 
