@@ -14,61 +14,47 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
     return;
   }
 
-  // Métricas principais
-  const total = attendances.length;
-  const resolvidos = attendances.filter(a => a.status === "Resolvido").length;
-  const pendentes = attendances.filter(a => a.status === "Pendente").length;
-  const encaminhados = attendances.filter(a => a.status === "Encaminhado").length;
+  // 1. Quantidade de suportes
+  const totalSuportes = attendances.length;
 
-  // Tempo médio de atendimento
-  const atendimentosComTempo = attendances.filter(a => a.timeSpent > 0);
-  const tempoMedio = atendimentosComTempo.length 
-    ? Math.round(atendimentosComTempo.reduce((sum, a) => sum + a.timeSpent, 0) / atendimentosComTempo.length)
-    : 0;
+  // 2. Quantidade de suporte sem solução (Pendentes)
+  const suportesSemSolucao = attendances.filter(a => a.status === "Pendente").length;
 
-  // Tempo médio de primeira resposta (agora em minutos)
-  const atendimentosComResposta = attendances.filter(a => a.firstResponseMinutes && a.firstResponseMinutes > 0);
-  const tempoMedioPrimeiraResposta = atendimentosComResposta.length
-    ? Math.round(atendimentosComResposta.reduce((sum, a) => sum + (a.firstResponseMinutes || 0), 0) / atendimentosComResposta.length)
-    : 0;
-
-  // Top 5 despachantes/clientes mais atendidos
-  const clienteCount: Record<string, number> = {};
-  attendances.forEach(a => {
-    clienteCount[a.category] = (clienteCount[a.category] || 0) + 1;
+  // 3. Causas do suporte sem solução
+  const causasSemSolucao: Record<string, number> = {};
+  attendances.filter(a => a.status === "Pendente" && a.causeNoSolution).forEach(a => {
+    const causa = a.causeNoSolution!;
+    causasSemSolucao[causa] = (causasSemSolucao[causa] || 0) + 1;
   });
-  const topClientes = Object.entries(clienteCount)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  const causasOrdenadas = Object.entries(causasSemSolucao)
+    .sort((a, b) => b[1] - a[1]);
 
-  // Top 5 erros mais frequentes
+  // 4. Dificuldades do Theo (observações)
+  const dificuldades = attendances
+    .filter(a => a.observations && a.observations.trim())
+    .map(a => a.observations!.trim());
+
+  // 5. Top 3 despachantes que mais chamaram
+  const despachanteCount: Record<string, number> = {};
+  attendances.forEach(a => {
+    despachanteCount[a.category] = (despachanteCount[a.category] || 0) + 1;
+  });
+  const top3Despachantes = Object.entries(despachanteCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  // 6. Top 3 erros com mais ocorrência
   const errorCount: Record<string, number> = {};
   attendances.forEach(a => {
     if (a.errorType) {
       errorCount[a.errorType] = (errorCount[a.errorType] || 0) + 1;
     }
   });
-  const topErros = Object.entries(errorCount)
+  const top3Erros = Object.entries(errorCount)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+    .slice(0, 3);
 
-  // Causas de pendências
-  const causasPendencia: Record<string, number> = {};
-  attendances.filter(a => a.status === "Pendente" && a.causeNoSolution).forEach(a => {
-    const causa = a.causeNoSolution!;
-    causasPendencia[causa] = (causasPendencia[causa] || 0) + 1;
-  });
-  const topCausasPendencia = Object.entries(causasPendencia)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
-  // Dificuldades (observações)
-  const dificuldades = attendances
-    .filter(a => a.observations && a.observations.trim())
-    .map(a => `• ${a.observations}`)
-    .slice(0, 5);
-
-  // Contagem por tipo
+  // 7. Comparativo de suporte documental e técnico
   const typeCount = attendances.reduce<Record<string, number>>((acc, a) => {
     acc[a.type] = (acc[a.type] || 0) + 1;
     return acc;
@@ -79,12 +65,20 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   const docPercent = totalCount > 0 ? (docCount / totalCount) * 100 : 0;
   const techPercent = totalCount > 0 ? (techCount / totalCount) * 100 : 0;
 
-  // Cálculo de ângulos para pizza
-  // Corrigir proporção do gráfico de pizza
-  // Ajuste para garantir padding e proporção 1:1
-  const pieMaxRadius = 120;
-  const piePadding = 20;
-  const pieRadius = pieMaxRadius - piePadding; // 100
+  // 8. Tempo médio até a primeira interação
+  const atendimentosComResposta = attendances.filter(a => a.firstResponseMinutes && a.firstResponseMinutes > 0);
+  const tempoMedioPrimeiraInteracao = atendimentosComResposta.length
+    ? Math.round(atendimentosComResposta.reduce((sum, a) => sum + (a.firstResponseMinutes || 0), 0) / atendimentosComResposta.length)
+    : 0;
+
+  // 9. Tempo médio de atendimento total
+  const atendimentosComTempo = attendances.filter(a => a.timeSpent > 0);
+  const tempoMedioTotal = atendimentosComTempo.length 
+    ? Math.round(atendimentosComTempo.reduce((sum, a) => sum + a.timeSpent, 0) / atendimentosComTempo.length)
+    : 0;
+
+  // Cálculo de ângulos para gráfico de pizza
+  const pieRadius = 100;
   const techAngle = (techPercent / 100) * 360;
   const techRadians = (techAngle * Math.PI) / 180;
   const techX = pieRadius * Math.sin(techRadians);
@@ -92,123 +86,116 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   const largeArcTech = techPercent > 50 ? 1 : 0;
   const largeArcDoc = docPercent > 50 ? 1 : 0;
 
-  // Layout helpers (mantém o layout atual, só melhora legibilidade)
-  const linhaAltura = 50; // mesma unidade usada nos Top 5
-  const basePizzaY = 750; // offset visual para o bloco de pizza
-  const baseCausasY = 750; // alinhado com pizza
-  const baseDificuldadesY = 1050; // bloco seguinte após causas
-  const maxTopCount = Math.max(topClientes.length, topErros.length);
-  const blocosAltura = maxTopCount * linhaAltura + 150; // referência geral (se precisar)
-  const yPizza = maxTopCount * linhaAltura + basePizzaY;
-  const yCausas = maxTopCount * linhaAltura + baseCausasY;
-  const yDificuldades = maxTopCount * linhaAltura + baseDificuldadesY;
-
-  // SVG
-  const width = 1400;
-  const height = 2000;
+  // Dimensões e configurações
+  const width = 1200;
+  const height = 1600;
   const padding = 50;
   const today = new Date().toLocaleDateString('pt-BR');
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <!-- Background -->
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
     </linearGradient>
-    <!-- Sombra sutil para profundidade -->
     <filter id="shadow">
       <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3" />
     </filter>
   </defs>
+  
   <rect x="0" y="0" width="${width}" height="${height}" fill="url(#bgGradient)" />
   
   <!-- Header -->
-  <text x="${width / 2}" y="60" fill="#60a5fa" font-size="42" font-weight="bold" text-anchor="middle">📊 Relatório Completo do Dia</text>
-  <text x="${width / 2}" y="100" fill="#cbd5e1" font-size="20" text-anchor="middle">${today} - Theo Stracke</text>
+  <text x="${width / 2}" y="60" fill="#60a5fa" font-size="40" font-weight="bold" text-anchor="middle">📊 Relatório de Suporte</text>
+  <text x="${width / 2}" y="95" fill="#cbd5e1" font-size="18" text-anchor="middle">${today} - Theo Stracke</text>
   
-  <!-- Cards de Resumo -->
-  <g transform="translate(${padding}, 140)">
-    <!-- Card Total -->
-    <rect x="0" y="0" width="300" height="120" rx="12" fill="#1e3a8a" opacity="0.3" filter="url(#shadow)" />
-    <rect x="0" y="0" width="300" height="120" rx="12" fill="none" stroke="#3b82f6" stroke-width="2" />
-    <text x="150" y="35" fill="#93c5fd" font-size="16" text-anchor="middle">TOTAL DE ATENDIMENTOS</text>
-    <text x="150" y="80" fill="#dbeafe" font-size="48" font-weight="bold" text-anchor="middle">${total}</text>
-    
-    <!-- Card Resolvidos -->
-    <rect x="330" y="0" width="300" height="120" rx="12" fill="#065f46" opacity="0.3" filter="url(#shadow)" />
-    <rect x="330" y="0" width="300" height="120" rx="12" fill="none" stroke="#10b981" stroke-width="2" />
-    <text x="480" y="35" fill="#86efac" font-size="16" text-anchor="middle">RESOLVIDOS</text>
-    <text x="480" y="80" fill="#d1fae5" font-size="48" font-weight="bold" text-anchor="middle">${resolvidos}</text>
-    
-    <!-- Card Pendentes -->
-    <rect x="660" y="0" width="300" height="120" rx="12" fill="#854d0e" opacity="0.3" filter="url(#shadow)" />
-    <rect x="660" y="0" width="300" height="120" rx="12" fill="none" stroke="#fbbf24" stroke-width="2" />
-    <text x="810" y="35" fill="#fde047" font-size="16" text-anchor="middle">PENDENTES</text>
-    <text x="810" y="80" fill="#fef3c7" font-size="48" font-weight="bold" text-anchor="middle">${pendentes}</text>
-    
-    <!-- Card Encaminhados -->
-    <rect x="990" y="0" width="300" height="120" rx="12" fill="#164e63" opacity="0.3" filter="url(#shadow)" />
-    <rect x="990" y="0" width="300" height="120" rx="12" fill="none" stroke="#06b6d4" stroke-width="2" />
-    <text x="1140" y="35" fill="#67e8f9" font-size="16" text-anchor="middle">ENCAMINHADOS</text>
-    <text x="1140" y="80" fill="#cffafe" font-size="48" font-weight="bold" text-anchor="middle">${encaminhados}</text>
+  <!-- Seção 1: Quantidade de Suportes -->
+  <g transform="translate(${padding}, 130)">
+    <rect x="0" y="0" width="500" height="110" rx="12" fill="#1e3a8a" opacity="0.3" filter="url(#shadow)" />
+    <rect x="0" y="0" width="500" height="110" rx="12" fill="none" stroke="#3b82f6" stroke-width="2" />
+    <text x="250" y="35" fill="#93c5fd" font-size="16" text-anchor="middle" font-weight="600">QUANTIDADE DE SUPORTES</text>
+    <text x="250" y="75" fill="#dbeafe" font-size="48" font-weight="bold" text-anchor="middle">${totalSuportes}</text>
   </g>
-
-  <!-- Tempos Médios -->
-  <g transform="translate(${padding}, 300)">
-    <rect x="0" y="0" width="630" height="100" rx="12" fill="#4c1d95" opacity="0.3" filter="url(#shadow)" />
-    <rect x="0" y="0" width="630" height="100" rx="12" fill="none" stroke="#a78bfa" stroke-width="2" />
-    <text x="20" y="35" fill="#e9d5ff" font-size="18" font-weight="600">⏱️ Tempo Médio de Atendimento</text>
-    <text x="20" y="70" fill="#ddd6fe" font-size="36" font-weight="bold">${formatMinutes(tempoMedio)}</text>
-    
-    <rect x="660" y="0" width="630" height="100" rx="12" fill="#831843" opacity="0.3" filter="url(#shadow)" />
-    <rect x="660" y="0" width="630" height="100" rx="12" fill="none" stroke="#f472b6" stroke-width="2" />
-    <text x="680" y="35" fill="#fce7f3" font-size="18" font-weight="600">⚡ Tempo Médio 1ª Resposta</text>
-    <text x="680" y="70" fill="#fbcfe8" font-size="36" font-weight="bold">${formatMinutes(tempoMedioPrimeiraResposta)}</text>
+  
+  <!-- Seção 2: Suportes Sem Solução -->
+  <g transform="translate(${padding + 530}, 130)">
+    <rect x="0" y="0" width="500" height="110" rx="12" fill="#854d0e" opacity="0.3" filter="url(#shadow)" />
+    <rect x="0" y="0" width="500" height="110" rx="12" fill="none" stroke="#fbbf24" stroke-width="2" />
+    <text x="250" y="35" fill="#fde047" font-size="16" text-anchor="middle" font-weight="600">SUPORTES SEM SOLUÇÃO</text>
+    <text x="250" y="75" fill="#fef3c7" font-size="48" font-weight="bold" text-anchor="middle">${suportesSemSolucao}</text>
   </g>
-
-  <!-- Top Despachantes -->
-  <g transform="translate(${padding}, 440)">
-    <text x="0" y="0" fill="#fbbf24" font-size="24" font-weight="bold">👥 Top 5 Despachantes/Clientes Mais Atendidos</text>
-    <rect x="0" y="15" width="630" height="${Math.max(topClientes.length * 50 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
-    ${topClientes.map(([cliente, qtd], i) => {
-      const barWidth = (qtd / Math.max(...topClientes.map(c => c[1]))) * 500;
+  
+  <!-- Seção 3: Causas de Suporte Sem Solução -->
+  ${causasOrdenadas.length > 0 ? `
+  <g transform="translate(${padding}, 270)">
+    <text x="0" y="0" fill="#fbbf24" font-size="22" font-weight="bold">⚠️ Causas de Suporte Sem Solução</text>
+    <rect x="0" y="15" width="1100" height="${causasOrdenadas.length * 42 + 30}" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5" filter="url(#shadow)" />
+    ${causasOrdenadas.map(([causa, qtd], i) => {
+      const causaTruncada = causa.length > 70 ? causa.substring(0, 70) + '...' : causa;
       return `
-        <text x="15" y="${50 + i * 50}" fill="#e2e8f0" font-size="16">${cliente}</text>
-        <rect x="15" y="${55 + i * 50}" width="${barWidth}" height="30" rx="4" fill="#3b82f6" opacity="0.8" />
-        <text x="${barWidth + 25}" y="${75 + i * 50}" fill="#60a5fa" font-size="18" font-weight="bold">${qtd}</text>
+        <text x="20" y="${50 + i * 42}" fill="#fde68a" font-size="16">${i + 1}. ${causaTruncada}</text>
+        <text x="1070" y="${50 + i * 42}" fill="#fbbf24" font-size="18" font-weight="bold" text-anchor="end">${qtd}x</text>
       `;
     }).join('')}
   </g>
-
-  <!-- Top Erros -->
-  <g transform="translate(${padding + 640}, 440)">
-    <text x="0" y="0" fill="#ef4444" font-size="24" font-weight="bold">🐛 Top 5 Erros Mais Frequentes</text>
-    <rect x="0" y="15" width="630" height="${Math.max(topErros.length * 50 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
-    ${topErros.length > 0 ? topErros.map(([erro, qtd], i) => {
-      const barWidth = (qtd / Math.max(...topErros.map(e => e[1]))) * 500;
-      const erroTruncado = erro.length > 35 ? erro.substring(0, 35) + '...' : erro;
-      return `
-        <text x="15" y="${50 + i * 50}" fill="#e2e8f0" font-size="16">${erroTruncado}</text>
-        <rect x="15" y="${55 + i * 50}" width="${barWidth}" height="30" rx="4" fill="#ef4444" opacity="0.8" />
-        <text x="${barWidth + 25}" y="${75 + i * 50}" fill="#fca5a5" font-size="18" font-weight="bold">${qtd}</text>
-      `;
-    }).join('') : `<text x="15" y="50" fill="#94a3b8" font-size="16">Nenhum erro categorizado</text>`}
+  ` : ''}
+  
+  <!-- Seção 4: Dificuldades do Theo -->
+  ${dificuldades.length > 0 ? `
+  <g transform="translate(${padding}, ${270 + (causasOrdenadas.length > 0 ? causasOrdenadas.length * 42 + 75 : 0)})">
+    <text x="0" y="0" fill="#f472b6" font-size="22" font-weight="bold">💭 Dificuldades Encontradas</text>
+    <rect x="0" y="15" width="1100" height="${Math.min(dificuldades.length, 5) * 38 + 30}" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5" filter="url(#shadow)" />
+    ${dificuldades.slice(0, 5).map((dif, i) => {
+      const difTruncada = dif.length > 95 ? dif.substring(0, 95) + '...' : dif;
+      return `<text x="20" y="${50 + i * 38}" fill="#f9a8d4" font-size="15">• ${difTruncada}</text>`;
+    }).join('')}
   </g>
-
-  <!-- Gráfico de Pizza -->
-  <!-- Centralizado horizontalmente e abaixo dos Top 5 -->
-  <g transform="translate(${width / 2}, ${yPizza})">
-    <text x="0" y="-${pieMaxRadius + 30}" fill="#60a5fa" font-size="26" font-weight="bold" text-anchor="middle">Distribuição por Tipo</text>
-    <circle cx="0" cy="0" r="${pieMaxRadius}" fill="#1e293b" stroke="#334155" stroke-width="3" />
+  ` : ''}
+  
+  <!-- Seção 5: Top 3 Despachantes -->
+  <g transform="translate(${padding}, ${270 + (causasOrdenadas.length > 0 ? causasOrdenadas.length * 42 + 75 : 0) + (dificuldades.length > 0 ? Math.min(dificuldades.length, 5) * 38 + 75 : 0)})">
+    <text x="0" y="0" fill="#60a5fa" font-size="22" font-weight="bold">👥 Top 3 Despachantes</text>
+    <rect x="0" y="15" width="530" height="${top3Despachantes.length * 55 + 25}" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5" filter="url(#shadow)" />
+    ${top3Despachantes.map(([despachante, qtd], i) => {
+      const maxQtd = Math.max(...top3Despachantes.map(d => d[1]));
+      const barWidth = (qtd / maxQtd) * 400;
+      const despTruncado = despachante.length > 28 ? despachante.substring(0, 28) + '...' : despachante;
+      return `
+        <text x="20" y="${48 + i * 55}" fill="#e2e8f0" font-size="16" font-weight="500">${i + 1}. ${despTruncado}</text>
+        <rect x="20" y="${53 + i * 55}" width="${barWidth}" height="28" rx="5" fill="#3b82f6" opacity="0.85" />
+        <text x="${barWidth + 30}" y="${72 + i * 55}" fill="#60a5fa" font-size="18" font-weight="bold">${qtd}</text>
+      `;
+    }).join('')}
+  </g>
+  
+  <!-- Seção 6: Top 3 Erros -->
+  <g transform="translate(${padding + 570}, ${270 + (causasOrdenadas.length > 0 ? causasOrdenadas.length * 42 + 75 : 0) + (dificuldades.length > 0 ? Math.min(dificuldades.length, 5) * 38 + 75 : 0)})">
+    <text x="0" y="0" fill="#ef4444" font-size="22" font-weight="bold">🐛 Top 3 Erros</text>
+    <rect x="0" y="15" width="530" height="${Math.max(top3Erros.length * 55 + 25, 90)}" rx="10" fill="#1e293b" stroke="#475569" stroke-width="1.5" filter="url(#shadow)" />
+    ${top3Erros.length > 0 ? top3Erros.map(([erro, qtd], i) => {
+      const maxQtd = Math.max(...top3Erros.map(e => e[1]));
+      const barWidth = (qtd / maxQtd) * 400;
+      const erroTruncado = erro.length > 28 ? erro.substring(0, 28) + '...' : erro;
+      return `
+        <text x="20" y="${48 + i * 55}" fill="#e2e8f0" font-size="16" font-weight="500">${i + 1}. ${erroTruncado}</text>
+        <rect x="20" y="${53 + i * 55}" width="${barWidth}" height="28" rx="5" fill="#ef4444" opacity="0.85" />
+        <text x="${barWidth + 30}" y="${72 + i * 55}" fill="#fca5a5" font-size="18" font-weight="bold">${qtd}</text>
+      `;
+    }).join('') : `<text x="20" y="50" fill="#94a3b8" font-size="15">Nenhum erro categorizado</text>`}
+  </g>
+  
+  <!-- Seção 7: Comparativo Documental vs Técnico -->
+  <g transform="translate(${width / 2}, ${270 + (causasOrdenadas.length > 0 ? causasOrdenadas.length * 42 + 75 : 0) + (dificuldades.length > 0 ? Math.min(dificuldades.length, 5) * 38 + 75 : 0) + Math.max(top3Despachantes.length, top3Erros.length) * 55 + 90})">
+    <text x="0" y="-150" fill="#10b981" font-size="22" font-weight="bold" text-anchor="middle">📈 Comparativo de Suporte</text>
+    <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount === 0
-      ? `<text x="0" y="10" fill="#94a3b8" font-size="18" text-anchor="middle">Sem dados</text>`
+      ? `<text x="0" y="10" fill="#94a3b8" font-size="16" text-anchor="middle">Sem dados</text>`
       : (techCount === 0 || docCount === 0)
         ? `
           <circle cx="0" cy="0" r="${pieRadius}" fill="${techCount > 0 ? '#3b82f6' : '#10b981'}" />
-          <text x="0" y="10" fill="#fff" font-size="28" font-weight="bold" text-anchor="middle">
-            ${techCount > 0 ? 'Suporte Técnico' : 'Suporte Documental'}
+          <text x="0" y="10" fill="#fff" font-size="20" font-weight="bold" text-anchor="middle">
+            ${techCount > 0 ? 'Técnico 100%' : 'Documental 100%'}
           </text>
         `
         : `
@@ -216,55 +203,40 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
           <path d="M 0 0 L ${techX} ${techY} A ${pieRadius} ${pieRadius} 0 ${largeArcDoc} 1 0 -${pieRadius} Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
         `
     }
-    <!-- Legenda -->
-    <g transform="translate(0, ${pieMaxRadius + 30})">
+    <g transform="translate(0, 150)">
       ${techCount > 0
         ? `
-          <rect x="-90" y="0" width="20" height="20" rx="4" fill="#3b82f6" />
-          <text x="-65" y="15" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
+          <rect x="-120" y="0" width="24" height="24" rx="4" fill="#3b82f6" />
+          <text x="-90" y="18" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
             Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)
           </text>
         ` : ''}
       ${docCount > 0
         ? `
-          <rect x="-90" y="30" width="20" height="20" rx="4" fill="#10b981" />
-          <text x="-65" y="45" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
+          <rect x="-120" y="32" width="24" height="24" rx="4" fill="#10b981" />
+          <text x="-90" y="50" fill="#e5e7eb" font-size="16" font-weight="500" text-anchor="start">
             Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)
           </text>
         ` : ''}
     </g>
   </g>
-
-  <!-- Causas de Pendência -->
-  ${topCausasPendencia.length > 0 ? `
-  <g transform="translate(${padding + 700}, ${yCausas})">
-    <text x="0" y="-50" fill="#fbbf24" font-size="24" font-weight="bold">⏸️ Causas de Pendência</text>
-    <rect x="0" y="-30" width="590" height="${topCausasPendencia.length * 40 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
-    ${topCausasPendencia.map(([causa, qtd], i) => {
-      const causaTruncada = causa.length > 45 ? causa.substring(0, 45) + '...' : causa;
-      return `
-        <text x="15" y="${i * 40 + 5}" fill="#fde68a" font-size="15">${causaTruncada}</text>
-        <text x="560" y="${i * 40 + 5}" fill="#fbbf24" font-size="16" font-weight="bold" text-anchor="end">${qtd}x</text>
-      `;
-    }).join('')}
+  
+  <!-- Seção 8 e 9: Tempos Médios -->
+  <g transform="translate(${padding}, ${270 + (causasOrdenadas.length > 0 ? causasOrdenadas.length * 42 + 75 : 0) + (dificuldades.length > 0 ? Math.min(dificuldades.length, 5) * 38 + 75 : 0) + Math.max(top3Despachantes.length, top3Erros.length) * 55 + 390})">
+    <rect x="0" y="0" width="530" height="95" rx="12" fill="#4c1d95" opacity="0.3" filter="url(#shadow)" />
+    <rect x="0" y="0" width="530" height="95" rx="12" fill="none" stroke="#a78bfa" stroke-width="2" />
+    <text x="20" y="32" fill="#e9d5ff" font-size="16" font-weight="600">⚡ Tempo Médio até 1ª Interação</text>
+    <text x="20" y="68" fill="#ddd6fe" font-size="34" font-weight="bold">${formatMinutes(tempoMedioPrimeiraInteracao)}</text>
+    
+    <rect x="570" y="0" width="530" height="95" rx="12" fill="#831843" opacity="0.3" filter="url(#shadow)" />
+    <rect x="570" y="0" width="530" height="95" rx="12" fill="none" stroke="#f472b6" stroke-width="2" />
+    <text x="590" y="32" fill="#fce7f3" font-size="16" font-weight="600">⏱️ Tempo Médio de Atendimento Total</text>
+    <text x="590" y="68" fill="#fbcfe8" font-size="34" font-weight="bold">${formatMinutes(tempoMedioTotal)}</text>
   </g>
-  ` : ''}
-
-  <!-- Dificuldades -->
-  ${dificuldades.length > 0 ? `
-  <g transform="translate(${padding}, ${yDificuldades})">
-    <text x="0" y="0" fill="#f472b6" font-size="24" font-weight="bold">💭 Dificuldades Encontradas</text>
-    <rect x="0" y="20" width="1300" height="${dificuldades.length * 35 + 30}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)" />
-    ${dificuldades.map((dif, i) => {
-      const difTruncada = dif.length > 120 ? dif.substring(0, 120) + '...' : dif;
-      return `<text x="15" y="${55 + i * 35}" fill="#f9a8d4" font-size="14">${difTruncada}</text>`;
-    }).join('')}
-  </g>
-  ` : ''}
   
   <!-- Footer -->
-  <text x="${width / 2}" y="${height - 40}" fill="#64748b" font-size="14" text-anchor="middle">Gerado automaticamente pelo Sistema de Atendimentos</text>
-  <text x="${width / 2}" y="${height - 20}" fill="#475569" font-size="12" text-anchor="middle">© ${new Date().getFullYear()} Theo Stracke - Todos os direitos reservados</text>
+  <text x="${width / 2}" y="${height - 40}" fill="#64748b" font-size="13" text-anchor="middle">Gerado automaticamente pelo Sistema de Atendimentos</text>
+  <text x="${width / 2}" y="${height - 20}" fill="#475569" font-size="11" text-anchor="middle">© ${new Date().getFullYear()} Theo Stracke - Todos os direitos reservados</text>
 </svg>`;
 
   // Converte SVG -> PNG e baixa
