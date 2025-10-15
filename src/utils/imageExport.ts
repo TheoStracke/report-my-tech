@@ -212,8 +212,8 @@ export const exportTodayToImage = async (attendances: Attendance[]) => {
       <path d="M 0 50 L ${techX} ${techY + 50} A 120 120 0 ${largeArcDoc} 1 0 -70 Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
       <rect x="-160" y="200" width="20" height="20" rx="4" fill="#3b82f6" />
       <text x="-135" y="215" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
-      <rect x="-160" y="230" width="20" height="20" rx="4" fill="#10b981" />
-      <text x="-135" y="245" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
+      <rect x="-160" y="235" width="20" height="20" rx="4" fill="#10b981" />
+      <text x="-135" y="250" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
     ` : ''}
   </g>
 
