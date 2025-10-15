@@ -135,6 +135,11 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
                             {attendance.category}
                           </Badge>
                         )}
+                        {attendance.errorType && (
+                          <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                            {attendance.errorType}
+                          </Badge>
+                        )}
                         <span className="text-sm text-muted-foreground">
                           {attendance.time} • {attendance.timeSpent} min
                         </span>

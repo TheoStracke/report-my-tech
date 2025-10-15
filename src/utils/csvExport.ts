@@ -13,6 +13,7 @@ export const exportTodayToCSV = (attendances: Attendance[]): void => {
     "Cliente/Setor",
     "Tipo de Atendimento",
     "Categoria",
+    "Tipo de Erro",
     "Descrição do Problema",
     "Solução Aplicada",
     "Status",
@@ -27,6 +28,7 @@ export const exportTodayToCSV = (attendances: Attendance[]): void => {
     a.client,
     a.type,
     a.category || "",
+    a.errorType || "",
     `"${a.problem.replace(/"/g, '""')}"`, // Escapar aspas
     `"${a.solution.replace(/"/g, '""')}"`,
     a.status,

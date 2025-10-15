@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Attendance, AttendanceStatus, AttendanceType } from "@/types/attendance";
 import { updateAttendance } from "@/utils/localStorage";
 import { Save } from "lucide-react";
 import { toast } from "sonner";
-import { loadCategories, addCategory as addNewCategory } from "@/utils/categories";
+import { loadCategories } from "@/utils/categories";
+import { SUPPORT_ERRORS } from "@/utils/supportErrors";
 
 interface AttendanceModalProps {
   attendance: Attendance;
@@ -27,6 +29,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
     client: attendance.client,
     type: attendance.type as AttendanceType,
     category: attendance.category || "",
+    errorType: attendance.errorType || "",
     problem: attendance.problem,
     solution: attendance.solution,
     status: attendance.status as AttendanceStatus,
@@ -36,8 +39,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
     observations: attendance.observations || "",
   });
 
-  const [categories, setCategories] = useState(() => loadCategories());
-  const [newCategory, setNewCategory] = useState("");
+  const [categories] = useState(() => loadCategories());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +54,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
       client: formData.client,
       type: formData.type,
       category: formData.category || undefined,
+      errorType: formData.errorType || undefined,
       problem: formData.problem,
       solution: formData.solution,
       status: formData.status,
@@ -99,47 +102,31 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-category">Despachante/Categoria</Label>
-            <div className="flex gap-2">
-              <Select 
-                value={formData.category} 
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Despachante</Label>
+              <Combobox
+                options={categories}
+                value={formData.category}
                 onValueChange={(value) => setFormData({ ...formData, category: value })}
-              >
-                <SelectTrigger className="bg-input border-border flex-1">
-                  <SelectValue placeholder="Selecione ou adicione..." />
+                placeholder="Selecione o despachante..."
+                searchPlaceholder="Buscar despachante..."
+                emptyText="Nenhum despachante encontrado."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-errorType">Tipo de Erro</Label>
+              <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>
+                <SelectTrigger className="bg-input border-border">
+                  <SelectValue placeholder="Selecione o tipo de erro..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
+                  {SUPPORT_ERRORS.map((error) => (
+                    <SelectItem key={error} value={error}>{error}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                id="edit-newCategory"
-                placeholder="Nova categoria"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                className="bg-input border-border flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  if (newCategory.trim()) {
-                    addNewCategory(newCategory.trim());
-                    setCategories(loadCategories());
-                    setFormData({ ...formData, category: newCategory.trim() });
-                    setNewCategory("");
-                    toast.success("Categoria adicionada!");
-                  }
-                }}
-                className="px-3"
-              >
-                Adicionar
-              </Button>
             </div>
           </div>
 

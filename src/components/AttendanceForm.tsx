@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Attendance, AttendanceStatus, AttendanceType } from "@/types/attendance";
 import { addAttendance } from "@/utils/localStorage";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-import { loadCategories, addCategory as addNewCategory } from "@/utils/categories";
+import { loadCategories } from "@/utils/categories";
+import { SUPPORT_ERRORS } from "@/utils/supportErrors";
 
 interface AttendanceFormProps {
   onAdd: () => void;
@@ -20,6 +22,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     client: "",
     type: "Suporte Técnico" as AttendanceType,
     category: "",
+    errorType: "",
     problem: "",
     solution: "",
     status: "Resolvido" as AttendanceStatus,
@@ -29,8 +32,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     observations: "",
   });
 
-  const [categories, setCategories] = useState<string[]>(() => loadCategories());
-  const [newCategory, setNewCategory] = useState<string>("");
+  const [categories] = useState(() => loadCategories());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +50,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       client: formData.client,
       type: formData.type,
       category: formData.category || undefined,
+      errorType: formData.errorType || undefined,
       problem: formData.problem,
       solution: formData.solution,
       status: formData.status,
@@ -65,6 +68,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       client: "",
       type: "Suporte Técnico",
       category: "",
+      errorType: "",
       problem: "",
       solution: "",
       status: "Resolvido",
@@ -73,8 +77,6 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       causeNoSolution: "",
       observations: "",
     });
-
-    setNewCategory("");
 
     onAdd();
   };
@@ -113,42 +115,33 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="category">Despachante</Label>
+              <Combobox
+                options={categories}
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                placeholder="Selecione o despachante..."
+                searchPlaceholder="Buscar despachante..."
+                emptyText="Nenhum despachante encontrado."
+              />
+            </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria do Suporte (opcional)</Label>
-              <div className="flex gap-2">
-                <Select value={formData.category} onValueChange={(value: string) => setFormData({ ...formData, category: value })}>
-                  <SelectTrigger className="bg-input border-border min-w-[240px]">
-                    <SelectValue placeholder="Selecione ou adicione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  placeholder="Nova categoria"
-                  className="bg-input border-border"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const v = newCategory.trim();
-                    if (!v) return;
-                    const next = addNewCategory(v);
-                    setCategories(next);
-                    setFormData({ ...formData, category: v });
-                    setNewCategory("");
-                    toast.success("Categoria adicionada");
-                  }}
-                >
-                  Adicionar
-                </Button>
-              </div>
+              <Label htmlFor="errorType">Tipo de Erro</Label>
+              <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>
+                <SelectTrigger className="bg-input border-border">
+                  <SelectValue placeholder="Selecione o tipo de erro..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUPPORT_ERRORS.map((error) => (
+                    <SelectItem key={error} value={error}>{error}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

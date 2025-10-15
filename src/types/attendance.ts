@@ -7,7 +7,8 @@ export interface Attendance {
   time: string;
   client: string;
   type: AttendanceType;
-  category?: string; // categoria específica do suporte (dinâmica)
+  category?: string; // despachante (dinâmica)
+  errorType?: string; // tipo de erro do suporte
   problem: string;
   solution: string;
   status: AttendanceStatus;
