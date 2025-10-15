@@ -5,9 +5,8 @@ export interface Attendance {
   id: string;
   date: string;
   time: string;
-  client: string;
+  category: string; // despachante ou cliente final
   type: AttendanceType;
-  category?: string; // despachante (dinâmica)
   errorType?: string; // tipo de erro do suporte
   problem: string;
   solution: string;

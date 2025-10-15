@@ -22,9 +22,8 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
   const pad = (n: number) => n.toString().padStart(2, "0");
   const defaultTime = pad(now.getHours()) + ":" + pad(now.getMinutes());
   const [formData, setFormData] = useState({
-    client: "",
-    type: "Suporte Técnico" as AttendanceType,
     category: "",
+    type: "Suporte Técnico" as AttendanceType,
     errorType: "",
     problem: "",
     solution: "",
@@ -36,12 +35,16 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     observations: "",
   });
 
-  const [categories] = useState(() => loadCategories());
+  const [categories] = useState(() => {
+    const cats = loadCategories();
+    if (!cats.includes("CLIENTE FINAL")) return ["CLIENTE FINAL", ...cats];
+    return cats;
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.client || !formData.problem || !formData.solution || (formData.status !== "Pendente" && !formData.timeSpent)) {
+    if (!formData.category || !formData.problem || !formData.solution || (formData.status !== "Pendente" && !formData.timeSpent)) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -51,9 +54,9 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       id: crypto.randomUUID(),
       date: today.toISOString().split("T")[0],
       time: formData.time,
-      client: formData.client,
+      client: formData.category, // agora o campo category é "Despachante ou Cliente Final"
       type: formData.type,
-      category: formData.category || undefined,
+      category: formData.category,
       errorType: formData.errorType || undefined,
       problem: formData.problem,
       solution: formData.solution,
@@ -69,9 +72,8 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     
     // Limpar formulário
     setFormData({
-      client: "",
-      type: "Suporte Técnico",
       category: "",
+      type: "Suporte Técnico",
       errorType: "",
       problem: "",
       solution: "",
@@ -97,14 +99,15 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="client">Cliente/Setor *</Label>
-              <Input
-                id="client"
-                value={formData.client}
-                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                placeholder="Nome do cliente ou setor"
-                className="bg-input border-border"
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="category">Despachante ou Cliente Final *</Label>
+              <Combobox
+                options={categories}
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                placeholder="Selecione ou digite o nome..."
+                searchPlaceholder="Buscar..."
+                emptyText="Nenhum encontrado."
               />
             </div>
             <div className="space-y-2">
@@ -133,18 +136,6 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="category">Despachante</Label>
-              <Combobox
-                options={categories}
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                placeholder="Selecione o despachante..."
-                searchPlaceholder="Buscar despachante..."
-                emptyText="Nenhum despachante encontrado."
-              />
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="errorType">Tipo de Erro</Label>
               <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>

@@ -10,9 +10,8 @@ export const exportTodayToCSV = (attendances: Attendance[]): void => {
   const headers = [
     "Data",
     "Hora",
-    "Cliente/Setor",
+    "Despachante/Cliente Final",
     "Tipo de Atendimento",
-    "Categoria",
     "Tipo de Erro",
     "Tempo até Primeira Mensagem (min)",
     "Descrição do Problema",
@@ -26,9 +25,8 @@ export const exportTodayToCSV = (attendances: Attendance[]): void => {
   const rows = attendances.map((a) => [
     a.date,
     a.time,
-    a.client,
+    a.category,
     a.type,
-    a.category || "",
     a.errorType || "",
     a.firstResponseMinutes !== undefined ? a.firstResponseMinutes.toString() : "",
     `"${a.problem.replace(/"/g, '""')}"`, // Escapar aspas

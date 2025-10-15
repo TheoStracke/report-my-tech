@@ -1,6 +1,7 @@
 const CATEGORIES_KEY = "theo-stracke-support-categories";
 
 const DEFAULT_CATEGORIES: string[] = [
+  "CLIENTE FINAL",
   "ADEMAR DESPACHANTE",
   "AR REDE VELLUM",
   "ATIVA DESPACHANTE",

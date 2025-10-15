@@ -26,9 +26,8 @@ interface AttendanceModalProps {
 
 const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps) => {
   const [formData, setFormData] = useState({
-    client: attendance.client,
+    category: attendance.category || attendance.client || "",
     type: attendance.type as AttendanceType,
-    category: attendance.category || "",
     errorType: attendance.errorType || "",
     problem: attendance.problem,
     solution: attendance.solution,
@@ -40,21 +39,25 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
     observations: attendance.observations || "",
   });
 
-  const [categories] = useState(() => loadCategories());
+  const [categories] = useState(() => {
+    const cats = loadCategories();
+    if (!cats.includes("CLIENTE FINAL")) return ["CLIENTE FINAL", ...cats];
+    return cats;
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.client || !formData.problem || !formData.solution || !formData.timeSpent) {
+    if (!formData.category || !formData.problem || !formData.solution || !formData.timeSpent) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     const updatedAttendance: Attendance = {
       ...attendance,
-      client: formData.client,
+      client: formData.category,
       type: formData.type,
-      category: formData.category || undefined,
+      category: formData.category,
       errorType: formData.errorType || undefined,
       problem: formData.problem,
       solution: formData.solution,
@@ -80,13 +83,15 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="edit-client">Cliente/Setor *</Label>
-              <Input
-                id="edit-client"
-                value={formData.client}
-                onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                className="bg-input border-border"
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-category">Despachante ou Cliente Final *</Label>
+              <Combobox
+                options={categories}
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                placeholder="Selecione ou digite o nome..."
+                searchPlaceholder="Buscar..."
+                emptyText="Nenhum encontrado."
               />
             </div>
             <div className="space-y-2">
@@ -115,18 +120,6 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-category">Despachante</Label>
-              <Combobox
-                options={categories}
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                placeholder="Selecione o despachante..."
-                searchPlaceholder="Buscar despachante..."
-                emptyText="Nenhum despachante encontrado."
-              />
-            </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-errorType">Tipo de Erro</Label>
               <Select value={formData.errorType} onValueChange={(value: string) => setFormData({ ...formData, errorType: value })}>

@@ -22,7 +22,7 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
 
   const filteredAttendances = attendances.filter(
     (a) =>
-      a.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.problem.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.solution.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -146,7 +146,7 @@ const AttendanceList = ({ attendances, onUpdate }: AttendanceListProps) => {
                       </div>
                       
                       <div>
-                        <h4 className="font-semibold text-foreground">{attendance.client}</h4>
+                        <h4 className="font-semibold text-foreground">{attendance.category}</h4>
                         <p className="text-sm text-muted-foreground mt-1">
                           <span className="font-medium">Problema:</span> {attendance.problem}
                         </p>
