@@ -80,10 +80,12 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   const techPercent = totalCount > 0 ? (techCount / totalCount) * 100 : 0;
 
   // Cálculo de ângulos para pizza
+  // Corrigir proporção do gráfico de pizza
+  const pieRadius = 120;
   const techAngle = (techPercent / 100) * 360;
   const techRadians = (techAngle * Math.PI) / 180;
-  const techX = 100 * Math.sin(techRadians);
-  const techY = -100 * Math.cos(techRadians);
+  const techX = pieRadius * Math.sin(techRadians);
+  const techY = -pieRadius * Math.cos(techRadians);
   const largeArcTech = techPercent > 50 ? 1 : 0;
   const largeArcDoc = docPercent > 50 ? 1 : 0;
 
@@ -151,13 +153,13 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   <!-- Top Despachantes -->
   <g transform="translate(${padding}, 440)">
     <text x="0" y="0" fill="#fbbf24" font-size="24" font-weight="bold">👥 Top 5 Despachantes/Clientes Mais Atendidos</text>
-    <rect x="0" y="15" width="630" height="${Math.max(topClientes.length * 45 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <rect x="0" y="15" width="630" height="${Math.max(topClientes.length * 50 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${topClientes.map(([cliente, qtd], i) => {
       const barWidth = (qtd / Math.max(...topClientes.map(c => c[1]))) * 500;
       return `
-        <text x="15" y="${50 + i * 45}" fill="#e2e8f0" font-size="16">${cliente}</text>
-        <rect x="15" y="${55 + i * 45}" width="${barWidth}" height="25" rx="4" fill="#3b82f6" opacity="0.8" />
-        <text x="${barWidth + 25}" y="${73 + i * 45}" fill="#60a5fa" font-size="18" font-weight="bold">${qtd}</text>
+        <text x="15" y="${50 + i * 50}" fill="#e2e8f0" font-size="16">${cliente}</text>
+        <rect x="15" y="${55 + i * 50}" width="${barWidth}" height="30" rx="4" fill="#3b82f6" opacity="0.8" />
+        <text x="${barWidth + 25}" y="${75 + i * 50}" fill="#60a5fa" font-size="18" font-weight="bold">${qtd}</text>
       `;
     }).join('')}
   </g>
@@ -165,29 +167,30 @@ export async function exportFullReportImage(attendances: Attendance[]): Promise<
   <!-- Top Erros -->
   <g transform="translate(${padding + 660}, 440)">
     <text x="0" y="0" fill="#ef4444" font-size="24" font-weight="bold">🐛 Top 5 Erros Mais Frequentes</text>
-    <rect x="0" y="15" width="630" height="${Math.max(topErros.length * 45 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
+    <rect x="0" y="15" width="630" height="${Math.max(topErros.length * 50 + 20, 100)}" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1" />
     ${topErros.length > 0 ? topErros.map(([erro, qtd], i) => {
       const barWidth = (qtd / Math.max(...topErros.map(e => e[1]))) * 500;
       const erroTruncado = erro.length > 35 ? erro.substring(0, 35) + '...' : erro;
       return `
-        <text x="15" y="${50 + i * 45}" fill="#e2e8f0" font-size="16">${erroTruncado}</text>
-        <rect x="15" y="${55 + i * 45}" width="${barWidth}" height="25" rx="4" fill="#ef4444" opacity="0.8" />
-        <text x="${barWidth + 25}" y="${73 + i * 45}" fill="#fca5a5" font-size="18" font-weight="bold">${qtd}</text>
+        <text x="15" y="${50 + i * 50}" fill="#e2e8f0" font-size="16">${erroTruncado}</text>
+        <rect x="15" y="${55 + i * 50}" width="${barWidth}" height="30" rx="4" fill="#ef4444" opacity="0.8" />
+        <text x="${barWidth + 25}" y="${75 + i * 50}" fill="#fca5a5" font-size="18" font-weight="bold">${qtd}</text>
       `;
     }).join('') : `<text x="15" y="50" fill="#94a3b8" font-size="16">Nenhum erro categorizado</text>`}
   </g>
 
   <!-- Gráfico de Pizza -->
-  <g transform="translate(${padding + 200}, ${topClientes.length > topErros.length ? 700 + topClientes.length * 45 : 700 + topErros.length * 45})">
-    <text x="0" y="-50" fill="#94a3b8" font-size="24" font-weight="600" text-anchor="middle">📈 Distribuição por Tipo</text>
-    <circle cx="0" cy="50" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
+  <!-- Título do gráfico de pizza acima do gráfico -->
+  <g transform="translate(${padding + 200}, ${topClientes.length > topErros.length ? 700 + topClientes.length * 50 : 700 + topErros.length * 50})">
+    <text x="0" y="-160" fill="#60a5fa" font-size="24" font-weight="bold" text-anchor="middle">Distribuição dos Atendimentos</text>
+    <circle cx="0" cy="0" r="120" fill="#1e293b" stroke="#334155" stroke-width="3" />
     ${totalCount > 0 ? `
-      <path d="M 0 50 L 0 -70 A 120 120 0 ${largeArcTech} 1 ${techX} ${techY + 50} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
-      <path d="M 0 50 L ${techX} ${techY + 50} A 120 120 0 ${largeArcDoc} 1 0 -70 Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
-      <rect x="-160" y="200" width="20" height="20" rx="4" fill="#3b82f6" />
-      <text x="-135" y="215" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
-      <rect x="-160" y="230" width="20" height="20" rx="4" fill="#10b981" />
-      <text x="-135" y="245" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
+      <path d="M 0 0 L 0 -${pieRadius} A ${pieRadius} ${pieRadius} 0 ${largeArcTech} 1 ${techX} ${techY} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
+      <path d="M 0 0 L ${techX} ${techY} A ${pieRadius} ${pieRadius} 0 ${largeArcDoc} 1 0 -${pieRadius} Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
+      <rect x="-160" y="140" width="20" height="20" rx="4" fill="#3b82f6" />
+      <text x="-135" y="155" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
+      <rect x="-160" y="170" width="20" height="20" rx="4" fill="#10b981" />
+      <text x="-135" y="185" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
     ` : ''}
   </g>
 
