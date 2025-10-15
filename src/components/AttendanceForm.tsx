@@ -212,20 +212,21 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
             </div>
           </div>
 
-          {formData.status === "Pendente" && (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstResponse">Tempo de Primeira Resposta (min)*</Label>
-                <Input
-                  id="firstResponse"
-                  type="number"
-                  min="0"
-                  value={formData.firstResponseMinutes}
-                  onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
-                  placeholder="Ex: 5"
-                  className="bg-input border-border"
-                />
-              </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="firstResponse">Tempo até Primeira Mensagem* (hh:mm:ss)</Label>
+              <Input
+                id="firstResponse"
+                type="text"
+                pattern="^\\d{1,2}:\\d{2}(:\\d{2})?$"
+                value={formData.firstResponseMinutes}
+                onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
+                placeholder="Ex: 00:05:00 para 5 minutos"
+                className="bg-input border-border"
+                required
+              />
+            </div>
+            {formData.status === "Pendente" && (
               <div className="space-y-2">
                 <Label htmlFor="causeNoSolution">Causa (sem solução)*</Label>
                 <Input
@@ -236,8 +237,8 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                   className="bg-input border-border"
                 />
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="observations">Observações (opcional)</Label>
