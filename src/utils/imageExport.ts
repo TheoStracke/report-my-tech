@@ -34,7 +34,7 @@ const formatMinutes = (minutes: number): string => {
   return `${hours}h ${mins}min`;
 };
 
-export const exportTodayToImage = async (attendances: Attendance[]): Promise<void> {
+export const exportTodayToImage = async (attendances: Attendance[]): Promise<void> => {
   if (!attendances || attendances.length === 0) {
     alert("Nenhum atendimento registrado hoje para exportar.");
     return;
