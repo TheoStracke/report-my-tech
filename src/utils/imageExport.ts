@@ -211,10 +211,10 @@ export const exportTodayToImage = async (attendances: Attendance[]) => {
       <circle cx="0" cy="50" r="120" fill="#1e293b" stroke="#334155" stroke-width="2" />
       <path d="M 0 50 L 0 ${50 - radius} A ${radius} ${radius} 0 ${largeArcTech} 1 ${techX} ${techY + 50} Z" fill="#3b82f6" stroke="#1e293b" stroke-width="2" />
       <path d="M 0 50 L ${techX} ${techY + 50} A ${radius} ${radius} 0 ${largeArcDoc} 1 0 ${50 - radius} Z" fill="#10b981" stroke="#1e293b" stroke-width="2" />
-      <rect x="-160" y="200" width="20" height="20" rx="4" fill="#3b82f6" />
-      <text x="-135" y="215" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
-      <rect x="-160" y="235" width="20" height="20" rx="4" fill="#10b981" />
-      <text x="-135" y="250" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
+      <rect x="-160" y="210" width="20" height="20" rx="4" fill="#3b82f6" />
+      <text x="-135" y="225" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Técnico: ${techCount} (${techPercent.toFixed(1)}%)</text>
+      <rect x="-160" y="245" width="20" height="20" rx="4" fill="#10b981" />
+      <text x="-135" y="260" fill="#e5e7eb" font-size="16" font-weight="500">Suporte Documental: ${docCount} (${docPercent.toFixed(1)}%)</text>
     ` : `<text x="0" y="50" fill="#94a3b8" font-size="16" text-anchor="middle">Nenhum dado disponível</text>`}
   </g>
 
