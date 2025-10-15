@@ -407,17 +407,21 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                         Tempo 1ª Resposta <span className="text-destructive">*</span>
                       </Label>
                     </div>
-                    <Input
-                      id="firstResponse"
-                      type="text"
-                      pattern="^\\d{1,2}:\\d{2}(:\\d{2})?$"
-                      value={formData.firstResponseMinutes}
-                      onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
-                      placeholder="00:05:00"
-                      className="bg-input border-border h-11 text-base"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">Formato: hh:mm:ss</p>
+                    <div className="relative">
+                      <Input
+                        id="firstResponse"
+                        type="number"
+                        min="0"
+                        value={formData.firstResponseMinutes}
+                        onChange={(e) => setFormData({ ...formData, firstResponseMinutes: e.target.value })}
+                        placeholder="Ex: 5"
+                        className="bg-input border-border h-11 text-base pr-20"
+                        required
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        minutos
+                      </span>
+                    </div>
                   </div>
                 </div>
 
