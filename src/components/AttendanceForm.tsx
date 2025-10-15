@@ -18,6 +18,9 @@ interface AttendanceFormProps {
 }
 
 const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const defaultTime = pad(now.getHours()) + ":" + pad(now.getMinutes());
   const [formData, setFormData] = useState({
     client: "",
     type: "Suporte Técnico" as AttendanceType,
@@ -26,6 +29,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
     problem: "",
     solution: "",
     status: "Resolvido" as AttendanceStatus,
+    time: defaultTime,
     timeSpent: "",
     firstResponseMinutes: "",
     causeNoSolution: "",
@@ -42,11 +46,11 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       return;
     }
 
-    const now = new Date();
+    const today = new Date();
     const attendance: Attendance = {
       id: crypto.randomUUID(),
-      date: now.toISOString().split("T")[0],
-      time: now.toTimeString().split(" ")[0].substring(0, 5),
+      date: today.toISOString().split("T")[0],
+      time: formData.time,
       client: formData.client,
       type: formData.type,
       category: formData.category || undefined,
@@ -72,6 +76,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       problem: "",
       solution: "",
       status: "Resolvido",
+      time: defaultTime,
       timeSpent: "",
       firstResponseMinutes: "",
       causeNoSolution: "",
@@ -91,7 +96,7 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="client">Cliente/Setor *</Label>
               <Input
@@ -102,7 +107,6 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                 className="bg-input border-border"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="type">Tipo de Atendimento *</Label>
               <Select value={formData.type} onValueChange={(value: AttendanceType) => setFormData({ ...formData, type: value })}>
@@ -114,6 +118,17 @@ const AttendanceForm = ({ onAdd }: AttendanceFormProps) => {
                   <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="time">Horário do Atendimento *</Label>
+              <Input
+                id="time"
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                required
+                className="bg-input border-border"
+              />
             </div>
           </div>
 

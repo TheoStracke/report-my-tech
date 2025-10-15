@@ -33,6 +33,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
     problem: attendance.problem,
     solution: attendance.solution,
     status: attendance.status as AttendanceStatus,
+    time: attendance.time || "08:00",
     timeSpent: attendance.timeSpent.toString(),
     firstResponseMinutes: (attendance.firstResponseMinutes ?? "").toString(),
     causeNoSolution: attendance.causeNoSolution ?? "",
@@ -58,6 +59,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
       problem: formData.problem,
       solution: formData.solution,
       status: formData.status,
+      time: formData.time,
       timeSpent: formData.status === "Pendente" ? 0 : parseInt(formData.timeSpent || "0"),
       firstResponseMinutes: formData.status === "Pendente" ? parseInt(formData.firstResponseMinutes || "0") : undefined,
       causeNoSolution: formData.status === "Pendente" ? (formData.causeNoSolution || undefined) : undefined,
@@ -77,7 +79,7 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
           <DialogTitle>Editar Atendimento</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="edit-client">Cliente/Setor *</Label>
               <Input
@@ -87,7 +89,6 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
                 className="bg-input border-border"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="edit-type">Tipo de Atendimento *</Label>
               <Select value={formData.type} onValueChange={(value: AttendanceType) => setFormData({ ...formData, type: value })}>
@@ -99,6 +100,17 @@ const AttendanceModal = ({ attendance, onClose, onUpdate }: AttendanceModalProps
                   <SelectItem value="Suporte Técnico">Suporte Técnico</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-time">Horário do Atendimento *</Label>
+              <Input
+                id="edit-time"
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                required
+                className="bg-input border-border"
+              />
             </div>
           </div>
 
